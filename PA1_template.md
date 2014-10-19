@@ -10,7 +10,6 @@ be more helpful downstream.  The "date" columns data type to Date rather than fa
 
 
 ```r
-# setwd("C:/Users/Paul/Dropbox/Learning/Coursera/Reproducible_Research/RepData_PeerAssessment1");
 unzip("activity.zip",overwrite=T)
 df <- read.csv("activity.csv",colClasses=c("integer","Date","integer"))
 ```
@@ -103,10 +102,10 @@ nrow(df[!complete.cases(df),])
 
 There are a number of cases in which the number of steps is NA.  This may introduce
 some bias in the data. We'll impute the missing steps using the average steps
-for that interval.  First, we'll round the mean number of steps per interval to 
+for that 5 minute interval.  First, we'll round the mean number of steps per interval to 
 a whole number because it seems more trouble than its worth to switch the analysis
 to decimal numbers. Next, the original data set is merged with the average steps
-per interval. Lastly, missing values are replaced with the average.
+per interval. Lastly, missing values are replaced with the average for the matching interval.
 
 
 ```r
@@ -148,3 +147,27 @@ median(merged_daily_steps_df$steps)
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+A factor variable called day_type, with values of "weekday" and "weekend", is added 
+to the imputed data set. Aggregation at the interval and day_type level then 
+occurs. Lastly, the daily activity patterns, with a panel each for weekend and weekday.
+
+* One difference is that more steps occur on weekends than weekdays. 
+* Another difference? The weekday steps ramp up earlier in the day.  
+* A third difference is that weekend steps tend to be more evenly distributed throughout the day.
+
+
+```r
+merged_df$day_type <- factor(ifelse(weekdays(merged_df$date) %in% c("Saturday","Sunday"),"weekend","weekday"))
+merged_interval_df <- ddply(merged_df,.(interval,day_type),summarize,mean_steps=round(mean(steps),2))
+
+ggplot(data=merged_interval_df
+       ,aes(x=interval,y=mean_steps))+
+    xlab("Interval")+
+    ylab("Number of steps")+
+    theme_classic()+
+    geom_line() +
+    facet_wrap(~day_type,ncol=1)
+```
+
+![plot of chunk unnamed-chunk-11](./PA1_template_files/figure-html/unnamed-chunk-11.png) 
